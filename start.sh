@@ -27,7 +27,6 @@ function removeUnwantedImages() {
 function networkDown() {
     infoln "remove directories[peerOrgs/ordererOrg/fabric-ca]"
     sudo rm -Rf organizations && sudo rm -Rf tls-ca
-    # stop org3 containers also in addition to org1 and org2, in case we were running sample to add org3
     DOCKER_SOCK=$DOCKER_SOCK
     docker-compose -f $COMPOSE_FILE_BASE -f $COMPOSE_FILE_CA -f $COMPOSE_FILE_TLSCA down --volumes --remove-orphans
     # Don't remove the generated artifacts -- note, the ledgers are always removed
@@ -40,7 +39,6 @@ function networkDown() {
     docker run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf system-genesis-block/*.block organizations/peerOrganizations organizations/ordererOrganizations'
     ## remove fabric ca artifacts
     docker run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf organizations/fabric-ca/org1/msp organizations/fabric-ca/org1/tls-cert.pem organizations/fabric-ca/org1/ca-cert.pem organizations/fabric-ca/org1/IssuerPublicKey organizations/fabric-ca/org1/IssuerRevocationPublicKey organizations/fabric-ca/org1/fabric-ca-server.db'
-    docker run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf organizations/fabric-ca/org2/msp organizations/fabric-ca/org2/tls-cert.pem organizations/fabric-ca/org2/ca-cert.pem organizations/fabric-ca/org2/IssuerPublicKey organizations/fabric-ca/org2/IssuerRevocationPublicKey organizations/fabric-ca/org2/fabric-ca-server.db'
     docker run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf organizations/fabric-ca/ordererOrg/msp organizations/fabric-ca/ordererOrg/tls-cert.pem organizations/fabric-ca/ordererOrg/ca-cert.pem organizations/fabric-ca/ordererOrg/IssuerPublicKey organizations/fabric-ca/ordererOrg/IssuerRevocationPublicKey organizations/fabric-ca/ordererOrg/fabric-ca-server.db'
     docker run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf addOrg3/fabric-ca/org3/msp addOrg3/fabric-ca/org3/tls-cert.pem addOrg3/fabric-ca/org3/ca-cert.pem addOrg3/fabric-ca/org3/IssuerPublicKey addOrg3/fabric-ca/org3/IssuerRevocationPublicKey addOrg3/fabric-ca/org3/fabric-ca-server.db'
     # remove channel and script artifacts
@@ -89,10 +87,6 @@ function createOrgs() {
     # set Org1
     setOrg1CA
     setOrg1Peer
-
-    #set Org2
-    setOrg2CA
-    setOrg2Peer
 
     # set OrdererOrg
     setOrdererOrgCA

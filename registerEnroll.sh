@@ -27,8 +27,6 @@ function setTLSCA() {
     infoln "register id"
     fabric-ca-client register -d --id.name peer1-org1 --id.secret peer1PW --id.type peer -u https://0.0.0.0:7052
     fabric-ca-client register -d --id.name peer2-org1 --id.secret peer2PW --id.type peer -u https://0.0.0.0:7052
-    fabric-ca-client register -d --id.name peer1-org2 --id.secret peer1PW --id.type peer -u https://0.0.0.0:7052
-    fabric-ca-client register -d --id.name peer2-org2 --id.secret peer2PW --id.type peer -u https://0.0.0.0:7052
     fabric-ca-client register -d --id.name orderer1-org0 --id.secret ordererPW --id.type orderer -u https://0.0.0.0:7052
 }
 
@@ -95,36 +93,6 @@ function setOrg1CA() {
     fabric-ca-client register -d --id.name user-org1 --id.secret org1UserPW --id.type user -u https://0.0.0.0:7054
 }
 
-function setOrg2CA() {
-    export FABRIC_CA_CLIENT_TLS_CERTFILES=${PWD}/organizations/fabric-ca/org2/tls-cert.pem
-    export FABRIC_CA_CLIENT_HOME=${PWD}/organizations/peerOrgs/org2
-
-    set -x
-    fabric-ca-client enroll -d -u https://rca-org2-admin:rca-org2-adminpw@0.0.0.0:7055
-    { set +x; } 2>/dev/null
-
-    sudo echo 'NodeOUs:
-    Enable: true
-    ClientOUIdentifier:
-        Certificate: cacerts/0-0-0-0-7055.pem
-        OrganizationalUnitIdentifier: client
-    PeerOUIdentifier:
-        Certificate: cacerts/0-0-0-0-7055.pem
-        OrganizationalUnitIdentifier: peer
-    AdminOUIdentifier:
-        Certificate: cacerts/0-0-0-0-7055.pem
-        OrganizationalUnitIdentifier: admin
-    OrdererOUIdentifier:
-        Certificate: cacerts/0-0-0-0-7055.pem
-        OrganizationalUnitIdentifier: orderer' >"${PWD}/organizations/peerOrgs/org2/msp/config.yaml"
-
-    infoln "register id"
-    fabric-ca-client register -d --id.name peer1-org2 --id.secret peer1PW --id.type peer -u https://0.0.0.0:7055
-    fabric-ca-client register -d --id.name peer2-org2 --id.secret peer2PW --id.type peer -u https://0.0.0.0:7055
-    fabric-ca-client register -d --id.name admin-org2 --id.secret org2AdminPW --id.type admin -u https://0.0.0.0:7055
-    fabric-ca-client register -d --id.name user-org2 --id.secret org2UserPW --id.type user -u https://0.0.0.0:7055
-}
-
 function setOrg1Peer() {
 
     infoln "enroll peer1-org1"
@@ -180,62 +148,6 @@ function setOrg1Peer() {
     { set +x; } 2>/dev/null
 
     cp "${PWD}/organizations/peerOrgs/org1/msp/config.yaml" "${PWD}/organizations/peerOrgs/org1/users/admin@org1/msp/config.yaml"
-}
-
-function setOrg2Peer() {
-    infoln "enroll peer1-org2"
-    export FABRIC_CA_CLIENT_HOME=${PWD}/organizations/peerOrgs/org2/peers/peer1
-    export FABRIC_CA_CLIENT_TLS_CERTFILES=${PWD}/organizations/fabric-ca/org2/tls-cert.pem
-    export FABRIC_CA_CLIENT_MSPDIR=msp
-
-    set -x
-    fabric-ca-client enroll -d -u https://peer1-org2:peer1PW@0.0.0.0:7055
-    { set +x; } 2>/dev/null
-
-    cp "${PWD}/organizations/peerOrgs/org2/msp/config.yaml" "${PWD}/organizations/peerOrgs/org2/peers/peer1/msp/config.yaml"
-
-    export FABRIC_CA_CLIENT_HOME=${PWD}/organizations/peerOrgs/org2
-    export FABRIC_CA_CLIENT_MSPDIR=${PWD}/organizations/peerOrgs/org2/peers/peer1/tls-msp
-    export FABRIC_CA_CLIENT_TLS_CERTFILES=${PWD}/tls-ca/tls-cert.pem
-
-    set -x
-    fabric-ca-client enroll -d -u https://peer1-org2:peer1PW@0.0.0.0:7052 --enrollment.profile tls --csr.hosts peer1-org2
-    { set +x; } 2>/dev/null
-
-    sudo mv ${PWD}/organizations/peerOrgs/org2/peers/peer1/tls-msp/keystore/*_sk ${PWD}/organizations/peerOrgs/org2/peers/peer1/tls-msp/keystore/key.pem
-
-    infoln "enroll peer2-org2"
-    export FABRIC_CA_CLIENT_HOME=${PWD}/organizations/peerOrgs/org2/peers/peer2
-    export FABRIC_CA_CLIENT_TLS_CERTFILES=${PWD}/organizations/fabric-ca/org2/tls-cert.pem
-    export FABRIC_CA_CLIENT_MSPDIR=msp
-
-    set -x
-    fabric-ca-client enroll -d -u https://peer2-org2:peer2PW@0.0.0.0:7055
-    { set +x; } 2>/dev/null
-
-    cp "${PWD}/organizations/peerOrgs/org2/msp/config.yaml" "${PWD}/organizations/peerOrgs/org2/peers/peer2/msp/config.yaml"
-
-    export FABRIC_CA_CLIENT_HOME=${PWD}/organizations/peerOrgs/org2
-    export FABRIC_CA_CLIENT_MSPDIR=${PWD}/organizations/peerOrgs/org2/peers/peer2/tls-msp
-    export FABRIC_CA_CLIENT_TLS_CERTFILES=${PWD}/tls-ca/tls-cert.pem
-
-    set -x
-    fabric-ca-client enroll -d -u https://peer2-org2:peer2PW@0.0.0.0:7052 --enrollment.profile tls --csr.hosts peer2-org2
-    { set +x; } 2>/dev/null
-
-    sudo mv ${PWD}/organizations/peerOrgs/org2/peers/peer2/tls-msp/keystore/*_sk ${PWD}/organizations/peerOrgs/org2/peers/peer2/tls-msp/keystore/key.pem
-
-    infoln "enroll admin-org2"
-    export FABRIC_CA_CLIENT_HOME=${PWD}/organizations/peerOrgs/org2/users/admin@org2
-    export FABRIC_CA_CLIENT_TLS_CERTFILES=${PWD}/organizations/fabric-ca/org2/tls-cert.pem
-    export FABRIC_CA_CLIENT_MSPDIR=msp
-
-    set -x
-    fabric-ca-client enroll -d -u https://admin-org2:org2AdminPW@0.0.0.0:7055
-    { set +x; } 2>/dev/null
-
-    cp "${PWD}/organizations/peerOrgs/org2/msp/config.yaml" "${PWD}/organizations/peerOrgs/org2/users/admin@org2/msp/config.yaml"
-
 }
 
 function setOrderer() {
